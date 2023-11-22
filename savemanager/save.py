@@ -110,11 +110,15 @@ class AWSSave(Save):
 
         # if we have updates then we can remove old files from the index
         if len(delete_keys) > 0:
+            index_delete_keys = []
             # for every file in the index that is not on the local filesystem
             # remove from index but leave in AWS. Don't want to delete save data
             for key in self.index:
                 if key not in file_dict:
-                    del self.index[key]
+                    index_delete_keys.append(key)
+
+            for key in index_delete_keys:
+                del self.index[key]
 
         # upload files that are different
         for filename in file_dict.keys():
