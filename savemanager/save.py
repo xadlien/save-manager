@@ -109,7 +109,7 @@ class AWSSave(Save):
             del file_dict[key]
 
         # if we have updates then we can remove old files from the index
-        if len(delete_keys) > 0:
+        if len(file_dict) > 0:
             index_delete_keys = []
             # for every file in the index that is not on the local filesystem
             # remove from index but leave in AWS. Don't want to delete save data
