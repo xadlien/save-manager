@@ -94,14 +94,11 @@ class AWSSave(Save):
         # parse the data
         self.parse_index(index_object)
 
-        # remove files from index if they are not on the host 
+        # list files from index if they are not on the host 
         unindex_keys = []
         for key in self.index.keys():
             if key not in file_dict.keys():
-                print(f"UNINDEX {key}")
                 unindex_keys.append(key)
-        for key in unindex_keys:
-            del self.index[key]
         
         # compare file hashes
         #  delete files that don't need to be updated
@@ -133,6 +130,13 @@ class AWSSave(Save):
         for filename in file_dict.keys():
             self.client.upload_file(Bucket=self.bucket_name, Key=f"{self.path}/{filename.replace(self.local_path, '')}", Filename=filename)
             print(f"COPYING {filename} to {self.path}/{filename}")
+
+        # delete from index only if files are being uploaded
+        # todo: get a better algorithm
+        if len(file_dict.keys()) > 0:
+            for key in unindex_keys:
+                print(f"UNINDEX {key}")
+                del self.index[key]
 
         # update index
         index_str = ""
