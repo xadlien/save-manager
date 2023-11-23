@@ -103,11 +103,27 @@ class AWSSave(Save):
         # compare file hashes
         #  delete files that don't need to be updated
         delete_keys = []
+        latest_remote_modtime = 0.0
+        latest_local_modtime = 0.0
         for filename in file_dict.keys():
             local_hash = file_dict[filename]
             remote_hash = self.index.get(filename, ("", ""))[0]
             local_modtime = os.path.getmtime(filename)
+
+            try: 
+                # set max local modtime
+                if float(local_modtime) > latest_local_modtime:
+                    latest_local_modtime = local_modtime
+            except ValueError:
+                pass
             remote_modtime = self.index.get(filename, ("", ""))[1]
+            try:
+                # set max remote modtime
+                if float(remote_modtime) > latest_remote_modtime:
+                    latest_remote_modtime = remote_modtime
+            except ValueError: 
+                pass
+            
             if local_hash == remote_hash or str(local_modtime) <= str(remote_modtime):
                 delete_keys.append(filename)
 
@@ -133,7 +149,7 @@ class AWSSave(Save):
 
         # delete from index only if files are being uploaded
         # todo: get a better algorithm
-        if len(file_dict.keys()) > 0:
+        if len(file_dict.keys()) > 0 and latest_local_modtime > latest_remote_modtime:
             for key in unindex_keys:
                 print(f"UNINDEX {key}")
                 del self.index[key]
