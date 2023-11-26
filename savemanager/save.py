@@ -120,7 +120,7 @@ class AWSSave(Save):
             try:
                 # set max remote modtime
                 if float(remote_modtime) > latest_remote_modtime:
-                    latest_remote_modtime = remote_modtime
+                    latest_remote_modtime = float(remote_modtime)
             except ValueError: 
                 pass
             
@@ -130,22 +130,21 @@ class AWSSave(Save):
         for key in delete_keys:
             del file_dict[key]
 
-        # if we have updates then we can remove old files from the index
-        # if len(file_dict) > 0:
-        #     index_delete_keys = []
-        #     # for every file in the index that is not on the local filesystem
-        #     # remove from index but leave in AWS. Don't want to delete save data
-        #     for key in self.index:
-        #         if key not in file_dict:
-        #             index_delete_keys.append(key)
-
-        #     for key in index_delete_keys:
-        #         del self.index[key]
+        # check the whole index for remote mod time
+        for filename in self.index.keys():
+            remote_modtime = self.index.get(filename, ("", ""))[1]
+            if float(remote_modtime) > latest_remote_modtime:
+                latest_remote_modtime = float(remote_modtime)
 
         # upload files that are different
-        for filename in file_dict.keys():
-            self.client.upload_file(Bucket=self.bucket_name, Key=f"{self.path}/{filename.replace(self.local_path, '')}", Filename=filename)
-            print(f"COPYING {filename} to {self.path}/{filename}")
+        if latest_local_modtime > latest_remote_modtime:
+            for filename in file_dict.keys():
+                self.client.upload_file(Bucket=self.bucket_name, Key=f"{self.path}/{filename.replace(self.local_path, '')}", Filename=filename)
+                print(f"COPYING {filename} to {self.path}/{filename}")
+        else:
+            for filename in file_dict.keys():
+                del self.index[filename]
+                os.remove(filename)
 
         # delete from index only if files are being uploaded
         # todo: get a better algorithm
