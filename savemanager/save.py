@@ -142,11 +142,12 @@ class AWSSave(Save):
                 self.client.upload_file(Bucket=self.bucket_name, Key=f"{self.path}/{filename.replace(self.local_path, '')}", Filename=filename)
                 print(f"COPYING {filename} to {self.path}/{filename}")
         else:
+            delete_keys = []
             for filename in file_dict.keys():
-                print(filename)
-                print(self.index)
-                del self.index[filename]
+                delete_keys.append(filename)
                 os.remove(filename)
+            for key in delete_keys:
+                del file_dict[key]
 
         # delete from index only if files are being uploaded
         # todo: get a better algorithm
