@@ -143,6 +143,8 @@ class AWSSave(Save):
                 print(f"COPYING {filename} to {self.path}/{filename}")
         else:
             for filename in file_dict.keys():
+                print(filename)
+                print(self.index)
                 del self.index[filename]
                 os.remove(filename)
 
